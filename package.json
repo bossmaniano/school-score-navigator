@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "create-admin": "node create-admin-users.mjs"
+    "create-admin": "node create-admin-users.mjs",
+    "fix-admin-login": "node fix-admin-login.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

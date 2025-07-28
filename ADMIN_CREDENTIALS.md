@@ -1,5 +1,8 @@
 # 🔑 SchoolMS Admin Credentials
 
+⚠️ **ATTENTION**: These credentials are currently NOT WORKING due to database issues.  
+📖 **See `ADMIN_FIX_README.md` for the solution.**
+
 ## Default Administrator Accounts
 
 ### Primary Administrator
