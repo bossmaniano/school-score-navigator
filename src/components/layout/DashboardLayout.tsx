@@ -10,7 +10,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const location = useLocation();
 
   const getNavigationItems = () => {
@@ -104,7 +104,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={logout}
+                  onClick={signOut}
                   className="h-8 w-8 p-0"
                 >
                   <LogOut className="h-4 w-4" />

@@ -1,11 +1,19 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  session: Session | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, userData?: { full_name?: string }) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
   isAuthenticated: boolean;
+  // Legacy compatibility
+  login: (email: string, password: string) => Promise<{ error: any }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,48 +32,97 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock authentication - in real app, this would call an API
-    const mockUsers: User[] = [
-      {
-        id: '1',
-        name: 'John Admin',
-        email: 'admin@school.com',
-        role: 'administrator',
-      },
-      {
-        id: '2',
-        name: 'Jane Teacher',
-        email: 'teacher@school.com',
-        role: 'class_teacher',
-        classId: 'class1',
-      },
-      {
-        id: '3',
-        name: 'Bob Student',
-        email: 'student@school.com',
-        role: 'student',
-        classId: 'class1',
-      },
-    ];
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch user profile from our profiles table
+          setTimeout(async () => {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .single();
 
-    const foundUser = mockUsers.find(u => u.email === email);
-    if (foundUser && password === 'password') {
-      setUser(foundUser);
-      return true;
-    }
-    return false;
+            if (profile) {
+              setUser({
+                id: profile.id,
+                name: profile.full_name,
+                email: profile.email || session.user.email || '',
+                role: profile.role,
+              });
+            }
+          }, 0);
+        } else {
+          setUser(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
   };
 
-  const logout = () => {
-    setUser(null);
+  const signUp = async (email: string, password: string, userData?: { full_name?: string }) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: userData || {}
+      }
+    });
+    return { error };
   };
 
-  const isAuthenticated = !!user;
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const isAuthenticated = !!session && !!user;
+
+  // Legacy compatibility methods
+  const login = signIn;
+  const logout = signOut;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      signIn, 
+      signUp, 
+      signOut, 
+      isAuthenticated,
+      // Legacy compatibility
+      login,
+      logout
+    }}>
       {children}
     </AuthContext.Provider>
   );
