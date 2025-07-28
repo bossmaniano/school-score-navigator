@@ -22,6 +22,28 @@ The SchoolMS Admin Portal is a comprehensive administrative interface designed f
 - **Administrator**: Full system access and control
 - **Head Teacher**: School-level administrative features
 
+### 🔑 Admin Credentials
+
+**Default Administrator Account:**
+```
+Email: admin@schoolms.edu
+Password: AdminSchool2024!
+Role: Administrator
+```
+
+**Default Head Teacher Account:**
+```
+Email: headteacher@schoolms.edu  
+Password: HeadTeacher2024!
+Role: Head Teacher
+```
+
+> ⚠️ **Security Notice**: 
+> - Change default passwords immediately after first login
+> - Use strong, unique passwords for production environments
+> - Enable two-factor authentication when available
+> - These credentials are for initial setup and testing only
+
 ### Security Features
 - Role-based authentication
 - Login attempt monitoring (5 attempts max)
@@ -121,9 +143,13 @@ The SchoolMS Admin Portal is a comprehensive administrative interface designed f
 
 ### Logging In
 1. Navigate to `/admin`
-2. Enter administrator email and password
+2. Enter administrator credentials:
+   - **Email**: `admin@schoolms.edu`
+   - **Password**: `AdminSchool2024!`
 3. Complete role verification
 4. Access granted to admin dashboard
+
+> 💡 **Quick Login**: Use the default admin credentials above for immediate access
 
 ### Dashboard Navigation
 - **Overview Tab**: Quick actions and recent activity
@@ -177,10 +203,11 @@ SELECT * FROM profiles WHERE role = 'head_teacher';
 
 ### Best Practices
 1. **Strong Passwords**: Require minimum 6 characters
-2. **Regular Audits**: Monitor access logs regularly
-3. **Role Management**: Assign minimal required permissions
-4. **Session Management**: Automatic timeout after inactivity
-5. **Backup Strategy**: Regular automated backups
+2. **Change Default Credentials**: Update admin passwords immediately
+3. **Regular Audits**: Monitor access logs regularly
+4. **Role Management**: Assign minimal required permissions
+5. **Session Management**: Automatic timeout after inactivity
+6. **Backup Strategy**: Regular automated backups
 
 ### Incident Response
 - Failed login attempts are logged and monitored
@@ -202,7 +229,10 @@ SELECT * FROM profiles WHERE role = 'head_teacher';
 - **Performance Reviews**: Monthly system optimization
 
 ### Troubleshooting
-1. **Login Issues**: Check role permissions and account status
+1. **Login Issues**: 
+   - Use default credentials: `admin@schoolms.edu` / `AdminSchool2024!`
+   - Check role permissions and account status
+   - Verify account is not locked due to failed attempts
 2. **Performance Issues**: Monitor system metrics in dashboard
 3. **Data Issues**: Use backup and recovery tools
 4. **Access Denied**: Verify user roles and permissions
