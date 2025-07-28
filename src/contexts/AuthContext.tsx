@@ -35,30 +35,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchUserProfile = async (userId: string, userEmail: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.warn('No profile found for user, using default:', error.message);
+        // If no profile exists, create a default user object
+        setUser({
+          id: userId,
+          name: userEmail.split('@')[0], // Use email prefix as fallback name
+          email: userEmail,
+          role: 'student', // Default role
+        });
+      } else if (profile) {
+        setUser({
+          id: profile.id,
+          name: profile.full_name || userEmail.split('@')[0],
+          email: profile.email || userEmail,
+          role: profile.role || 'student',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Fallback to basic user info if profile fetch fails
+      setUser({
+        id: userId,
+        name: userEmail.split('@')[0],
+        email: userEmail,
+        role: 'student',
+      });
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         
         if (session?.user) {
-          // Fetch user profile from our profiles table
-          setTimeout(async () => {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single();
-
-            if (profile) {
-              setUser({
-                id: profile.id,
-                name: profile.full_name,
-                email: profile.email || session.user.email || '',
-                role: profile.role,
-              });
-            }
-          }, 0);
+          await fetchUserProfile(session.user.id, session.user.email || '');
         } else {
           setUser(null);
         }
@@ -68,22 +90,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (!session) {
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+        
+        setSession(session);
+        if (session?.user) {
+          await fetchUserProfile(session.user.id, session.user.email || '');
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
         setLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error };
+    } finally {
+      // Don't set loading to false here - let the auth state change handler do it
+    }
   };
 
   const signUp = async (email: string, password: string, userData?: { full_name?: string }) => {
@@ -101,7 +143,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    setLoading(true);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isAuthenticated = !!session && !!user;
