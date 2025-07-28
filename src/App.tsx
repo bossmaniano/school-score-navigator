@@ -7,7 +7,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import LoginPage from "@/components/auth/LoginPage";
+import AdminLoginPage from "@/components/auth/AdminLoginPage";
 import Dashboard from "@/pages/Dashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -23,12 +25,23 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/admin" element={<AdminLoginPage />} />
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Dashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['administrator', 'head_teacher']}>
+                  <DashboardLayout>
+                    <AdminDashboard />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

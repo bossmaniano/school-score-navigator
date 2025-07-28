@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { School, Users, BarChart3, Shield, CheckCircle, ArrowRight } from 'lucide-react';
+import AdminPortalCard from '@/components/AdminPortalCard';
 
 const Index = () => {
   return (
@@ -137,6 +138,24 @@ const Index = () => {
               </ul>
             </CardContent>
           </Card>
+        </div>
+      </section>
+
+      {/* Admin Portal Section */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-foreground mb-4">
+            Administrative Access
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Dedicated portal for system administrators and school management with advanced controls.
+          </p>
+        </div>
+        
+        <div className="flex justify-center">
+          <div className="max-w-md">
+            <AdminPortalCard />
+          </div>
         </div>
       </section>
 
