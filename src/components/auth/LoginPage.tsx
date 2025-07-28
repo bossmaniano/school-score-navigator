@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,16 +15,21 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp, isAuthenticated, loading } = useAuth();
+  const { signIn, signUp, isAuthenticated, loading, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Get the redirect path from location state or default to dashboard
+  const from = location.state?.from?.pathname || '/dashboard';
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated && !loading) {
-      navigate('/dashboard');
+    if (isAuthenticated && user && !loading) {
+      console.log('User authenticated, redirecting to:', from);
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, user, loading, navigate, from]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,26 +48,31 @@ const LoginPage: React.FC = () => {
         return;
       }
 
+      console.log('Attempting to sign in...');
       const { error } = await signIn(email, password);
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           title: 'Login failed',
           description: error.message || 'Invalid email or password. Please try again.',
           variant: 'destructive',
         });
+        setIsLoading(false);
       } else {
+        console.log('Sign in successful');
         toast({
           title: 'Welcome back!',
           description: 'You have been successfully logged in.',
         });
+        // Don't set loading to false here - let the auth context handle it
       }
     } catch (error) {
+      console.error('Unexpected error during sign in:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -170,6 +180,7 @@ const LoginPage: React.FC = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-10"
                         required
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -186,6 +197,7 @@ const LoginPage: React.FC = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10"
                         required
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -217,6 +229,7 @@ const LoginPage: React.FC = () => {
                         onChange={(e) => setFullName(e.target.value)}
                         className="pl-10"
                         required
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -233,6 +246,7 @@ const LoginPage: React.FC = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-10"
                         required
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -250,6 +264,7 @@ const LoginPage: React.FC = () => {
                         className="pl-10"
                         required
                         minLength={6}
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
