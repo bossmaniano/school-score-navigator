@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolMS Admin Setup</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            color: white;
+            font-size: 24px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            min-width: 200px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+        .credentials {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .credential-item {
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🛡️</div>
+            <h1>SchoolMS Admin Setup</h1>
+            <p>Create administrator accounts for the SchoolMS system</p>
+        </div>
+
+        <div id="status" class="status info">
+            Ready to create admin accounts. Click the button below to start.
+        </div>
+
+        <div class="credentials">
+            <h3>📋 Default Admin Credentials</h3>
+            <div class="credential-item">
+                <strong>Administrator:</strong><br>
+                Email: admin@schoolms.edu<br>
+                Password: AdminSchool2024!
+            </div>
+            <div class="credential-item">
+                <strong>Head Teacher:</strong><br>
+                Email: headteacher@schoolms.edu<br>
+                Password: HeadTeacher2024!
+            </div>
+            <p><small>⚠️ Change these passwords after first login!</small></p>
+        </div>
+
+        <div style="text-align: center;">
+            <button id="createUsersBtn" onclick="createAdminUsers()">
+                🚀 Create Admin Users
+            </button>
+            <button id="checkUsersBtn" onclick="checkExistingUsers()" style="background: #059669;">
+                🔍 Check Existing Users
+            </button>
+        </div>
+
+        <div id="loginSection" class="hidden" style="text-align: center; margin-top: 30px;">
+            <h3>✅ Setup Complete!</h3>
+            <p>You can now login to the admin portal:</p>
+            <button onclick="window.open('/admin', '_blank')" style="background: #059669;">
+                🔐 Open Admin Portal
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase client
+        const SUPABASE_URL = "https://xqhyfvxirabxfivafmtt.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxaHlmdnhpcmFieGZpdmFmbXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MDE0NjEsImV4cCI6MjA2OTI3NzQ2MX0.q3KhKa05TCwRZ9wO7_naYM-KiDzvbFBGn-FRX0-C5zg";
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const adminUsers = [
+            {
+                email: 'admin@schoolms.edu',
+                password: 'AdminSchool2024!',
+                role: 'administrator',
+                full_name: 'System Administrator'
+            },
+            {
+                email: 'headteacher@schoolms.edu',
+                password: 'HeadTeacher2024!',
+                role: 'head_teacher',
+                full_name: 'Head Teacher'
+            }
+        ];
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function appendStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML += `<br>${message}`;
+        }
+
+        async function checkExistingUsers() {
+            updateStatus('🔍 Checking for existing admin users...', 'info');
+            
+            try {
+                // Try to sign in with each admin account to see if they exist
+                for (const user of adminUsers) {
+                    try {
+                        const { data, error } = await supabase.auth.signInWithPassword({
+                            email: user.email,
+                            password: user.password
+                        });
+
+                        if (data.user) {
+                            appendStatus(`✅ ${user.email} exists and credentials work`, 'success');
+                            await supabase.auth.signOut(); // Sign out immediately
+                        }
+                    } catch (error) {
+                        appendStatus(`❌ ${user.email} - ${error.message}`, 'error');
+                    }
+                }
+                
+                appendStatus('Check complete!', 'info');
+            } catch (error) {
+                updateStatus(`❌ Error checking users: ${error.message}`, 'error');
+            }
+        }
+
+        async function createAdminUsers() {
+            const btn = document.getElementById('createUsersBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Creating users...';
+            
+            updateStatus('🚀 Starting admin user creation...', 'info');
+
+            try {
+                for (const user of adminUsers) {
+                    appendStatus(`📧 Creating ${user.email}...`, 'info');
+                    
+                    try {
+                        // Try to sign up the user
+                        const { data, error } = await supabase.auth.signUp({
+                            email: user.email,
+                            password: user.password,
+                            options: {
+                                data: {
+                                    full_name: user.full_name,
+                                    role: user.role
+                                }
+                            }
+                        });
+
+                        if (error) {
+                            if (error.message.includes('already registered')) {
+                                appendStatus(`⚠️ ${user.email} already exists`, 'info');
+                                
+                                // Try to sign in to verify credentials work
+                                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                                    email: user.email,
+                                    password: user.password
+                                });
+
+                                if (signInData.user) {
+                                    appendStatus(`✅ ${user.email} credentials verified`, 'success');
+                                    
+                                    // Update profile if needed
+                                    const { error: profileError } = await supabase
+                                        .from('profiles')
+                                        .upsert({
+                                            user_id: signInData.user.id,
+                                            email: user.email,
+                                            full_name: user.full_name,
+                                            role: user.role
+                                        });
+
+                                    if (!profileError) {
+                                        appendStatus(`✅ Profile updated for ${user.email}`, 'success');
+                                    }
+                                    
+                                    await supabase.auth.signOut();
+                                } else {
+                                    appendStatus(`❌ ${user.email} exists but credentials don't work`, 'error');
+                                }
+                            } else {
+                                appendStatus(`❌ Error creating ${user.email}: ${error.message}`, 'error');
+                            }
+                        } else if (data.user) {
+                            appendStatus(`✅ ${user.email} created successfully`, 'success');
+                        }
+                    } catch (userError) {
+                        appendStatus(`❌ Failed to process ${user.email}: ${userError.message}`, 'error');
+                    }
+                }
+
+                appendStatus('🎉 Admin setup completed!', 'success');
+                document.getElementById('loginSection').classList.remove('hidden');
+                
+            } catch (error) {
+                updateStatus(`❌ Setup failed: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Create Admin Users';
+            }
+        }
+    </script>
+</body>
+</html>
